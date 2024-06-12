@@ -1,0 +1,3 @@
+vllm==0.4.0.post1
+tabulate
+dm-tree
