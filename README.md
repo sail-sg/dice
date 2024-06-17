@@ -67,8 +67,9 @@ Please cite our paper if you find the repo helpful in your work:
 
 ```bibtex
 @article{chen2024bootstrapping,
-  title={Bootstrapping Language Models via DPO Implicit Rewards},
+  title={Bootstrapping Language Models with DPO Implicit Rewards},
   author={Chen, Changyu and Liu, Zichen and Du, Chao and Pang, Tianyu and Liu, Qian and Sinha, Arunesh and Varakantham, Pradeep and Lin, Min},
+  journal={arXiv preprint arXiv:2406.09760},
   year={2024}
 }
 ```
