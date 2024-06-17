@@ -1,5 +1,13 @@
 # Bootstrapping with DPO Implicit Rewards (DICE)
 
+<a href="https://arxiv.org/abs/2406.09760">
+<img src="https://img.shields.io/badge/Paper-Arvix%20Link-green" alt="Arxiv">
+</a>
+<a href="https://github.com/sail-sg/dice/blob/main/LICENSE">
+<img src="https://img.shields.io/badge/Code%20License-MIT-yellow.svg" alt="License">
+</a>
+</p>
+
 This repository contains the implementation of our paper Bootstrapping Language Models via DPO Implicit Rewards. We show that the implicit reward model from the prior DPO training can be utilized to bootstrap and further align LLMs.
 
 <img src="./DICE.png" width="1000px"></img>
@@ -38,7 +46,7 @@ Provide the local path to this repo to `DICE_DIR` in two files:
 E.g. `DICE_DIR="/home/username/dice"`
 
 ## Training scripts
-We provide the sample training scripts for both Llama3 and Zephyr settings. It is recommend to run the script with `8x A100 GPUs`. For other hardware environment, you might need to adjust the script. 
+We provide sample training scripts for both Llama3 and Zephyr settings. It is recommended to run the script with `8x A100 GPUs`. For other hardware environments, you might need to adjust the script. 
 
 - Llama3
   ```bash
