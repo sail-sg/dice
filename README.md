@@ -1,12 +1,7 @@
 # Bootstrapping with DPO Implicit Rewards (DICE)
 
-<a href="https://arxiv.org/abs/2406.09760">
-<img src="https://img.shields.io/badge/Paper-Arvix%20Link-green" alt="Arxiv">
-</a>
-<a href="https://github.com/sail-sg/dice/blob/main/LICENSE">
-<img src="https://img.shields.io/badge/Code%20License-MIT-yellow.svg" alt="License">
-</a>
-</p>
+[![Paper Arvix](https://img.shields.io/badge/Paper-Arvix%20Link-green)](https://arxiv.org/abs/2406.09760)
+[![Code License](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](https://github.com/sail-sg/dice/blob/main/LICENSE)
 
 This repository contains the implementation of our paper Bootstrapping Language Models via DPO Implicit Rewards. We show that the implicit reward model from the prior DPO training can be utilized to bootstrap and further align LLMs.
 
