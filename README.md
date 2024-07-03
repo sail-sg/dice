@@ -9,13 +9,15 @@ This repository contains the implementation of our paper Bootstrapping Language 
 <img src="./DICE.png" width="1000px"></img>
 
 ## Quick links
-- [Base Models and Released Models](#base-models-and-released-models)
-- [Setup](#setup)
+- [Bootstrapping with DPO Implicit Rewards (DICE)](#bootstrapping-with-dpo-implicit-rewards-dice)
+  - [Quick links](#quick-links)
+  - [Base Models and Released Models](#base-models-and-released-models)
+  - [Setup](#setup)
     - [Install dependencies](#install-dependencies)
     - [Setup the bash script](#setup-the-bash-script)
-- [Training scripts](#training-scripts)
-- [Acknowledgement](#acknowledgement)
-- [Citation](#citation)
+  - [Training scripts](#training-scripts)
+  - [Acknowledgement](#acknowledgement)
+  - [Citation](#citation)
 
 ## Base Models and Released Models
 | **Model**                  | **AE2 LC** | **AE2 WR** |
@@ -72,7 +74,7 @@ We provide sample training scripts for both Llama3 and Zephyr settings. It is re
 This repo is built on [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory). Thanks for the amazing work!
 
 ## Citation
-Please cite our paper if you find the repo helpful in your work:
+Please consider citing our paper if you find the repo helpful in your work:
 
 ```bibtex
 @article{chen2024bootstrapping,
