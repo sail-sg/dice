@@ -1,5 +1,6 @@
 # Bootstrapping with DPO Implicit Rewards (DICE)
 
+[![Collection](https://img.shields.io/badge/🤗-Model%20Collection-blue)](https://huggingface.co/collections/sail/dice-6684de998e62fe07709d67eb)
 [![Paper Arvix](https://img.shields.io/badge/Paper-Arvix%20Link-green)](https://arxiv.org/abs/2406.09760)
 [![Code License](https://img.shields.io/badge/Code%20License-MIT-yellow.svg)](https://github.com/sail-sg/dice/blob/main/LICENSE)
 
@@ -8,12 +9,25 @@ This repository contains the implementation of our paper Bootstrapping Language 
 <img src="./DICE.png" width="1000px"></img>
 
 ## Quick links
+- [Base Models and Released Models](#base-models-and-released-models)
 - [Setup](#setup)
     - [Install dependencies](#install-dependencies)
     - [Setup the bash script](#setup-the-bash-script)
 - [Training scripts](#training-scripts)
 - [Acknowledgement](#acknowledgement)
 - [Citation](#citation)
+
+## Base Models and Released Models
+| **Model**                  | **AE2 LC** | **AE2 WR** |
+|----------------------------|:----------:|:----------:|
+| 🤗[Llama-3-Base-8B-SFT-DPO](https://huggingface.co/princeton-nlp/Llama-3-Base-8B-SFT-DPO)    | 18.20      | 15.50      |
+| 🤗[Llama-3-Base-8B-DICE Iter1](https://huggingface.co/sail/Llama-3-Base-8B-DICE-Iter1) | 25.08      | 25.77      |
+| 🤗[Llama-3-Base-8B-DICE Iter2](https://huggingface.co/sail/Llama-3-Base-8B-DICE-Iter2) | 27.55      | 30.99      |
+| 🤗[Zephyr-7b-beta](https://huggingface.co/HuggingFaceH4/zephyr-7b-beta)             | 12.69      | 10.71      |
+| 🤗[Zephyr-7B-DICE Iter1](https://huggingface.co/sail/Zephyr-7B-DICE-Iter1)       | 19.03      | 17.67      |
+| 🤗[Zephyr-7B-DICE Iter2](https://huggingface.co/sail/Zephyr-7B-DICE-Iter2)       | 20.71      | 20.16      |
+
+Please refer to [pipeline.sh#1.1_response_generation](https://github.com/sail-sg/dice/blob/21abbe8c44ad2d608dbcf14551c209064ce66540/scripts/run_dice/pipeline.sh#L105) on instructions for batch inference with the appropriate chat template. 
 
 ## Setup
 ### Install dependencies
