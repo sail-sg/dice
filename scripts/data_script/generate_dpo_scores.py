@@ -67,7 +67,8 @@ def main(
     ref_model: str, 
     promp_resp_file: str, 
     template: str = "default",
-    save_to_outer_dir: bool = True
+    save_to_outer_dir: bool = True,
+    per_token: bool = False,
 ):
     assert promp_resp_file.endswith(".json")
     work_dir = promp_resp_file.replace(".json", "")
@@ -81,7 +82,7 @@ def main(
 
     # create pesudo preference dataset
     #   response as chosen, dummy response as rejected
-    pseudo_pref_path = create_pseudo_preference_dataset(promp_resp_file, work_dir)
+    create_pseudo_preference_dataset(promp_resp_file, work_dir)
 
     # generate pi and pi_ref logps
     subprocess.run([
@@ -105,7 +106,7 @@ def main(
         "--ddp_timeout", "180000000",
         "--bf16",
         "--report_to", "none",
-        "--run_name", "pi",
+        "--run_name", "per_token_pi" if per_token else "pi",
         "--ref_model",dpo_model,
     ])
     subprocess.run([
@@ -129,27 +130,47 @@ def main(
         "--ddp_timeout", "180000000",
         "--bf16",
         "--report_to", "none",
-        "--run_name", "pi_ref",
+        "--run_name", "per_token_pi_ref" if per_token else "pi_ref",
         "--ref_model",ref_model,
     ])
 
-    # postprocess: pi and pi_ref logps, dpo scores
-    pi_file = os.path.join(work_dir, "pi.pkl")
-    pi_ref_file = os.path.join(work_dir, "pi_ref.pkl")
-    data_logps = pd.concat([pd.DataFrame(pd.read_pickle(pi_file)), pd.DataFrame(pd.read_pickle(pi_ref_file))], axis=1)
-    data_output = pd.read_json(promp_resp_file, lines=True)
-    data_output['logps_pi'] = data_logps['chosen_logps-pi'].values
-    data_output['logps_pi_ref'] = data_logps['chosen_logps-pi_ref'].values
-    data_output['score'] = data_output['logps_pi'] - data_output['logps_pi_ref']
-    # filter out invalid entries
-    data_output = filt_invalid_pairs(data_output)
-    
-    data_output.to_json(output_path, orient='records', lines=True)
-    print(f"Scores saved to {output_path}")
+    if per_token:
+        pi_file = os.path.join(work_dir, "per_token_pi.pkl")
+        pi_ref_file = os.path.join(work_dir, "per_token_pi_ref.pkl")
+        concat_ids_file = os.path.join(work_dir, "concat_response_ids.pkl")
 
-    # clean up
-    shutil.rmtree(work_dir)
-    print(f"Cleaned up {work_dir}")
+        pi = pd.read_pickle(pi_file)
+        pi_ref = pd.read_pickle(pi_ref_file)
+        concat_ids = pd.read_pickle(concat_ids_file)
+
+        pt_log_pi = pi["chosen_logps-per_token_pi"]
+        pt_log_pi_ref = pi_ref["chosen_logps-per_token_pi_ref"]
+        pt_reward = [pt_log_pi[i] - pt_log_pi_ref[i] for i in range(len(pt_log_pi))]
+        token_ids = [cid[0] for cid in concat_ids]  # at idx 1 is rejected (dummy)
+
+        model_name = dpo_model.replace("/", "_")
+        pd.to_pickle({
+            "per_token_reward": pt_reward,
+            "token_ids": token_ids,
+        }, promp_resp_file.replace("response.json", f"credits_{model_name}.pkl"))
+    else:
+        # postprocess: pi and pi_ref logps, dpo scores
+        pi_file = os.path.join(work_dir, "pi.pkl")
+        pi_ref_file = os.path.join(work_dir, "pi_ref.pkl")
+        data_logps = pd.concat([pd.DataFrame(pd.read_pickle(pi_file)), pd.DataFrame(pd.read_pickle(pi_ref_file))], axis=1)
+        data_output = pd.read_json(promp_resp_file, lines=True)
+        data_output['logps_pi'] = data_logps['chosen_logps-pi'].values
+        data_output['logps_pi_ref'] = data_logps['chosen_logps-pi_ref'].values
+        data_output['score'] = data_output['logps_pi'] - data_output['logps_pi_ref']
+        # filter out invalid entries
+        data_output = filt_invalid_pairs(data_output)
+        
+        data_output.to_json(output_path, orient='records', lines=True)
+        print(f"Scores saved to {output_path}")
+
+        # clean up
+        shutil.rmtree(work_dir)
+        print(f"Cleaned up {work_dir}")
 
 
 if __name__ == "__main__":

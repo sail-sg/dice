@@ -47,19 +47,23 @@ def obtain_logps(args: Optional[Dict[str, Any]] = None) -> None:
         **split_dataset(dataset, data_args, training_args),
     )
 
-    chosen_logps, rejected_logps = trainer.get_all_reference_logps()
+    if "per_token" in training_args.run_name:
+        chosen_logps, rejected_logps, concat_response_ids = trainer.get_per_token_logps()
+    else:
+        chosen_logps, rejected_logps = trainer.get_all_reference_logps()
 
     # save
     output_dir = training_args.output_dir
     pi_or_pi_ref = training_args.run_name
     output_path = os.path.join(output_dir, f"{pi_or_pi_ref}.pkl")
-    assert pi_or_pi_ref in ['pi', 'pi_ref'], f"Invalid pi_or_pi_ref: {pi_or_pi_ref}" 
+    assert pi_or_pi_ref in ['pi', 'pi_ref', 'per_token_pi', 'per_token_pi_ref'], f"Invalid pi_or_pi_ref: {pi_or_pi_ref}" 
 
     pd.to_pickle({
         f"chosen_logps-{pi_or_pi_ref}": chosen_logps,
         f"rejected_logps-{pi_or_pi_ref}": rejected_logps,
     }, output_path)
     print(f"Saved logps to {output_path}")
+    pd.to_pickle(concat_response_ids, os.path.join(output_dir, f"concat_response_ids.pkl"))
 
 
 if __name__ == "__main__":

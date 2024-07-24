@@ -367,7 +367,86 @@ class CustomDPOTrainer(DPOTrainer):
                 raise ValueError
         else:
             return self.model.state_dict()
+    
+    @staticmethod
+    def get_batch_per_token_logps(
+        logits: torch.FloatTensor,
+        labels: torch.LongTensor,
+        label_pad_token_id: int = -100,
+        is_encoder_decoder: bool = False,
+    ) -> torch.FloatTensor:
+        if logits.shape[:-1] != labels.shape:
+            raise ValueError("Logits (batch and sequence length dim) and labels must have the same shape.")
 
+        if not is_encoder_decoder:
+            labels = labels[:, 1:].clone()
+            logits = logits[:, :-1, :]
+        loss_mask = labels != label_pad_token_id
+
+        # dummy token; we'll ignore the losses on these tokens later
+        labels[labels == label_pad_token_id] = 0
+
+        per_token_logps = torch.gather(logits.log_softmax(-1), dim=2, index=labels.unsqueeze(2)).squeeze(2)
+
+        return per_token_logps * loss_mask
+
+    def get_per_token_logps(self):
+        if not self._precomputed_train_ref_log_probs:
+            dataloader_params = {
+                "batch_size": self.args.per_device_train_batch_size,
+                "collate_fn": self.data_collator,
+                "num_workers": self.args.dataloader_num_workers,
+                "pin_memory": self.args.dataloader_pin_memory,
+                "shuffle": False,
+            }
+
+            # prepare dataloader
+            data_loader = self.accelerator.prepare(
+                DataLoader(self.train_dataset, **dataloader_params)
+            )
+
+            reference_chosen_logps = []
+            reference_rejected_logps = []
+            concat_response_ids = []
+            for padded_batch in tqdm(
+                iterable=data_loader, desc="Train dataset reference log probs"
+            ):
+                # Compute per-token reference log probs
+                compte_ref_context_manager = torch.cuda.amp.autocast if self._peft_has_been_casted_to_bf16 else nullcontext
+                with torch.no_grad(), compte_ref_context_manager():
+                    # Concatenated forward
+                    batch_copied = BatchEncoding(
+                        {k: v.detach().clone() for k, v in padded_batch.items()}
+                    )  # avoid error
+                    all_logits: "torch.Tensor" = self.ref_model(
+                        input_ids=batch_copied["input_ids"],
+                        attention_mask=batch_copied["attention_mask"],
+                        return_dict=True,
+                        use_cache=False,
+                    ).logits.to(torch.float32)
+
+                    all_logps = self.get_batch_per_token_logps(
+                        logits=all_logits,
+                        labels=batch_copied["labels"],
+                        is_encoder_decoder=self.is_encoder_decoder,
+                        label_pad_token_id=self.label_pad_token_id,
+                    )
+                    batch_size = padded_batch["input_ids"].size(0) // 2
+                    reference_chosen_logp, reference_rejected_logp = all_logps.split(batch_size, dim=0)
+
+                reference_chosen_logp, reference_rejected_logp = (
+                    self.accelerator.gather_for_metrics(
+                        (reference_chosen_logp, reference_rejected_logp)
+                    )
+                )
+                reference_chosen_logps.append(reference_chosen_logp.cpu().float().numpy())
+                reference_rejected_logps.append(reference_rejected_logp.cpu().float().numpy())
+                concat_response_ids.append(batch_copied["input_ids"].cpu().int().numpy())
+
+            self._precomputed_train_ref_log_probs = True
+
+            return reference_chosen_logps, reference_rejected_logps, concat_response_ids
+        
     def get_all_reference_logps(self):
         if not self._precomputed_train_ref_log_probs:
             dataloader_params = {
