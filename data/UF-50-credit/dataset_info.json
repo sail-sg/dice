@@ -1,0 +1,10 @@
+{
+    "preference": {
+        "file_name": "preference.json",
+        "ranking": true,
+        "columns": {
+            "prompt": "prompt",
+            "response": "output"
+        }
+    }
+}
