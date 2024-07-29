@@ -12,19 +12,37 @@ from rich.table import Table
 from transformers import PreTrainedTokenizer
 
 colors = {
-    0: "on honeydew2",
+    0: "on while",
     1: "on dark_sea_green1",
-    2: "on dark_olive_green1",
-    3: "on yellow2",
-    4: "on yellow3",
+    2: "on magenta2",
+    3: "on dark_olive_green1",
+    4: "on red1",
 }
+
+console = Console()
+
+
+def extract_prompt(tokenizer, rewards, ids):
+    prompt_len = (np.cumsum(rewards) == 0).sum()
+    return tokenizer.decode(ids[:prompt_len]), prompt_len
 
 
 def get_highlighted_text(tokenizer, rewards, ids):
-    norm_rewards = (rewards - rewards.min()) / (rewards.max() - rewards.min())
-    color_id = np.floor((norm_rewards * len(colors)))
+    valid = (ids != 128001) & (ids != 128009)  # remove padding
+    rewards = rewards[valid]
+    ids = ids[valid]
+    # rewards, ids = rewards[:-1], ids[:-1]
+    num_partition = len(colors)
+    num_i_per_p = np.ceil(len(rewards) / num_partition)
+    argsort = rewards.argsort()
+    color_id = np.zeros(len(ids), dtype=np.int32)
+    for i in range(len(rewards)):
+        color_id[argsort[i]] = i // num_i_per_p
+
     color_id = np.clip(color_id, 0, len(colors) - 1).astype(np.int32)
-    return "".join([f"[{colors[jt]}]{tokenizer.decode(it)}[/{colors[jt]}]" for it, jt in zip(ids, color_id)])
+    text = "".join([f"[{colors[jt]}]{tokenizer.decode(it)}[/{colors[jt]}]" for it, jt in zip(ids, color_id)])
+    console.print(ids, text)
+    return text
 
 
 def main(
@@ -52,13 +70,12 @@ def main(
         per_token_reward_all_iters.append(pt_rewards)
         concat_response_ids_all_iters.append(concat_response_ids)
 
-    console = Console()
-
     for i in range(len(concat_response_ids_all_iters[0])):
         table = Table(show_lines=True)
         table.add_column("chosen")
         table.add_column("rejected")
         table.add_column("returns")
+
         for t in range(len(path_list)):
             pt_rewards = per_token_reward_all_iters[t]
             concat_response_ids = concat_response_ids_all_iters[t]
@@ -68,8 +85,14 @@ def main(
             chosen_ids = concat_response_ids[i][0][:-1]
             rejected_ids = concat_response_ids[i][1][:-1]
 
-            chosen_text = get_highlighted_text(tokenizer, chosen_rewards, chosen_ids)
-            rejected_text = get_highlighted_text(tokenizer, rejected_rewards, rejected_ids)
+            if t == 0:
+                # show prompt at the first row
+                prompt, prompt_len = extract_prompt(tokenizer, chosen_rewards, chosen_ids)
+                table.add_row(prompt, "-", "-")
+
+            chosen_text = get_highlighted_text(tokenizer, chosen_rewards[prompt_len:], chosen_ids[prompt_len:])
+            rejected_text = get_highlighted_text(tokenizer, rejected_rewards[prompt_len:], rejected_ids[prompt_len:])
+
             returns = f"{round(chosen_rewards.sum().item(), 2)},{round(rejected_rewards.sum().item(), 2)}"
             table.add_row(chosen_text, rejected_text, returns)
         console.print(table)
