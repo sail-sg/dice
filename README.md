@@ -77,10 +77,10 @@ This repo is built on [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory).
 Please consider citing our paper if you find the repo helpful in your work:
 
 ```bibtex
-@article{chen2024bootstrapping,
-  title={Bootstrapping Language Models with DPO Implicit Rewards},
-  author={Chen, Changyu and Liu, Zichen and Du, Chao and Pang, Tianyu and Liu, Qian and Sinha, Arunesh and Varakantham, Pradeep and Lin, Min},
-  journal={arXiv preprint arXiv:2406.09760},
-  year={2024}
+@inproceedings{chen2025bootstrapping,
+   title={Bootstrapping Language Models with DPO Implicit Rewards},
+   author={Chen, Changyu and Liu, Zichen and Du, Chao and Pang, Tianyu and Liu, Qian and Sinha, Arunesh and Varakantham, Pradeep and Lin, Min},
+   booktitle={International Conference on Learning Representations (ICLR)},
+   year={2025}
 }
 ```
